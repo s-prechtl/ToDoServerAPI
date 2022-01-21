@@ -17,7 +17,8 @@ class ToDo implements JsonSerializable
 
     private Category $category;
 
-    private function __construct(\stdClass $obj) {
+    private function __construct(\stdClass $obj)
+    {
         $this->id = $obj->todo_id;
         $this->name = $obj->name;
         $this->description = $obj->description;
@@ -54,10 +55,10 @@ class ToDo implements JsonSerializable
         $statement->execute();
 
         $results = $statement->fetchAll(PDO::FETCH_OBJ);
-        if ($results != null){
+        if ($results != null) {
             $result = [];
             $curritem = 0;
-            foreach ($results as $curr){
+            foreach ($results as $curr) {
                 $result[$curritem] = new self($curr);
                 $curritem++;
             }
@@ -65,12 +66,19 @@ class ToDo implements JsonSerializable
         return $result;
     }
 
-    public static function addToDatabase(\stdClass $obj){
+    public static function updateTodo(int $id, ToDo $toDo)
+    {
+        $db = Database::getInstance();
+
+        $statement = $db->prepare("UPDATE todo SET todo_id ='$toDo->id' name ='$toDo->name' desc='$toDo->description' date_until ='$toDo->untilDate' responsible ='$toDo->responsible' category_id ='$toDo->category->id' WHERE id='$id'");
+    }
+
+    public static function addToDatabase(\stdClass $obj)
+    {
         $todo = new self($obj);
 
         $db = Database::getInstance();
         $statement = $db->prepare("INSERT INTO `todos` (`todo_id`, `name`, `description`, `date_created`, `date_until`, `responsible`, `category_id`) VALUES ($todo->id, $todo->name, $todo->description ,current_timestamp(), $todo->untilDate, $todo->responsible, $todo->category->getId());");
-
 
     }
 
@@ -87,11 +95,13 @@ class Category implements JsonSerializable
     private int $id;
     private string $name;
 
-    public function getId(){
+    public function getId()
+    {
         return $this->id;
     }
 
-    private function __construct(\stdClass $obj) {
+    private function __construct(\stdClass $obj)
+    {
         $this->id = $obj->category_id;
         $this->name = $obj->name;
     }
@@ -122,7 +132,8 @@ class Category implements JsonSerializable
     }
 }
 
-function dictToStdClass($dict){
+function dictToStdClass($dict)
+{
     $obj = new stdClass();
     $obj->name = $dict["name"];
     $obj->description = $dict["description"];
@@ -173,7 +184,6 @@ switch ($_GET['option']) {
             $obj = dictToStdClass($data);
 
             Todo::addToDatabase($obj);
-
 
             header("Location: index.php/?option=getTodo&id=" . $db->lastInsertId());
         }
