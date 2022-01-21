@@ -71,6 +71,7 @@ class ToDo implements JsonSerializable
         $db = Database::getInstance();
 
         $statement = $db->prepare("UPDATE todo SET todo_id ='$toDo->id' name ='$toDo->name' desc='$toDo->description' date_until ='$toDo->untilDate' responsible ='$toDo->responsible' category_id ='$toDo->category->id' WHERE id='$id'");
+        $statement->execute();
     }
 
     public static function addToDatabase(stdClass $obj)
