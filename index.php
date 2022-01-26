@@ -66,11 +66,22 @@ class ToDo implements JsonSerializable
         return $result;
     }
 
-    public static function updateTodo(int $id, ToDo $toDo)
+    public static function updateTodo(stdClass $obj)
     {
         $db = Database::getInstance();
+        $todo = new self($obj);
+        $catId = $todo->category->getId();
+        $sql = "UPDATE todos SET ";
 
-        $statement = $db->prepare("UPDATE todo SET todo_id ='$toDo->id' name ='$toDo->name' desc='$toDo->description' date_until ='$toDo->untilDate' responsible ='$toDo->responsible' category_id ='$toDo->category->id' WHERE id='$id'");
+        if (isset($todo->name)) $sql .= "name='$todo->name' ";
+        if (isset($todo->description)) $sql .= "description='$todo->description' ";
+        if (isset($todo->untilDate)) $sql .= "date_until='$todo->untilDate' ";
+        if (isset($todo->responsible)) $sql .= "responsible='$todo->responsible' ";
+        if ($todo->category->getId() !== null) $sql .= "category_id='$catId' ";
+
+        $sql .= "WHERE id='$todo->id'";
+        var_dump($sql);
+        $statement = $db->prepare($sql);
         $statement->execute();
     }
 
@@ -79,7 +90,7 @@ class ToDo implements JsonSerializable
         $todo = new self($obj);
 
         $db = Database::getInstance();
-        $catId =  $todo->category->getId();
+        $catId = $todo->category->getId();
         $dateCreated = date('Y-m-d');
         $statement = $db->prepare("INSERT INTO todos (`todo_id`, `name`, `description`, `date_created`, `date_until`, `responsible`, `category_id`) VALUES (:todo, :tname, :description, :date_created, :date_until, :responsible, :cat);");
         $statement->bindParam(":todo", $todo->id);
@@ -145,12 +156,32 @@ class Category implements JsonSerializable
 function dictToStdClass($dict)
 {
     $obj = new stdClass();
+    $obj->todo_id = $dict['id'];
     $obj->name = $dict["name"];
     $obj->description = $dict["description"];
     $obj->date_until = $dict["date_until"];
     $obj->responsible = $dict["responsible"];
     $obj->category_id = $dict["category_id"];
     return $obj;
+}
+
+function getDataFromPost(): array
+{
+    $data = [
+        'id' => intval(['todoId']),
+        'name' => $_POST['name'],
+        'description' => $_POST['description'],
+        'date_until' => $_POST['date_until'],
+        'responsible' => $_POST['responsible'],
+        'category_id' => intval($_POST['category_id'])
+    ];
+    foreach ($data as $key => $value) {
+        if (empty($value)) {
+            $data[$key] = null;
+        }
+    }
+
+    return $data;
 }
 
 $db = Database::getInstance();
@@ -177,19 +208,7 @@ switch ($_GET['option']) {
          */
 
         if (isset($_POST['name'])) {
-            $data = [
-                'name' => $_POST['name'],
-                'description' => $_POST['description'],
-                'date_until' => $_POST['date_until'],
-                'responsible' => $_POST['responsible'],
-                'category_id' => $_POST['category_id']
-            ];
-
-            foreach ($data as $key => $value) {
-                if (empty($value)) {
-                    $data[$key] = null;
-                }
-            }
+            $data = getDataFromPost();
 
             $obj = dictToStdClass($data);
 
@@ -205,6 +224,14 @@ switch ($_GET['option']) {
             $category = Category::loadById($id);
 
             echo json_encode($category);
+        }
+        break;
+    case "updateTodo":
+        if (isset($_POST['todoId'])) {
+            $data = getDataFromPost();
+            $obj = dictToStdClass($data);
+            ToDo::updateTodo($obj);
+            header("Location: index.php/?option=getTodo&id=" . $obj->id);
         }
         break;
 }

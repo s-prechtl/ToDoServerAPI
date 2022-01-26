@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Todo</title>
+</head>
+<body>
+<form action='http://localhost:80/index.php?option=updateTodo' method="post">
+  <label for="id">id:</label>
+  <input type="text" id="id" name="id"><br><br>
+  <label for="name">name:</label>
+  <input type="text" id="name" name="name"><br><br>
+  <label for="description">description:</label>
+  <input type="text" id="description" name="description"><br><br>
+  <label for="date_until">Date Until:</label>
+  <input type="text" id="date_until" name="date_until"><br><br>
+  <label for="responsible">Responsible:</label>
+  <input type="text" id="responsible" name="responsible"><br><br>
+  <label for="category_id">Category ID:</label>
+  <input type="text" id="category_id" name="category_id"><br><br>
+  <input type="submit" value="Submit">
+</form>
+</body>
+</html>
