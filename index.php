@@ -73,13 +73,13 @@ class ToDo implements JsonSerializable
         $catId = $todo->category->getId();
         $sql = "UPDATE todos SET ";
 
-        if (isset($todo->name)) $sql .= "name='$todo->name' ";
-        if (isset($todo->description)) $sql .= "description='$todo->description' ";
-        if (isset($todo->untilDate)) $sql .= "date_until='$todo->untilDate' ";
-        if (isset($todo->responsible)) $sql .= "responsible='$todo->responsible' ";
+        if (isset($todo->name)) $sql .= "name='$todo->name', ";
+        if (isset($todo->description)) $sql .= "description='$todo->description', ";
+        if (isset($todo->untilDate)) $sql .= "date_until='$todo->untilDate', ";
+        if (isset($todo->responsible)) $sql .= "responsible='$todo->responsible', ";
         if ($todo->category->getId() !== null) $sql .= "category_id='$catId' ";
 
-        $sql .= "WHERE id='$todo->id'";
+        $sql .= "WHERE todo_id='$todo->id';";
         var_dump($sql);
         $statement = $db->prepare($sql);
         $statement->execute();
@@ -231,7 +231,7 @@ switch ($_GET['option']) {
             $data = getDataFromPost();
             $obj = dictToStdClass($data);
             ToDo::updateTodo($obj);
-            header("Location: index.php/?option=getTodo&id=" . $obj->id);
+            header("Location: index.php/?option=getTodo&id=" . $obj->todo_id);
         }
         break;
 }
