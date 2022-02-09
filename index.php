@@ -92,8 +92,7 @@ class ToDo implements JsonSerializable
         $db = Database::getInstance();
         $catId = $todo->category->getId();
         $dateCreated = date('Y-m-d');
-        $statement = $db->prepare("INSERT INTO todos (`todo_id`, `name`, `description`, `date_created`, `date_until`, `responsible`, `category_id`) VALUES (:todo, :tname, :description, :date_created, :date_until, :responsible, :cat);");
-        $statement->bindParam(":todo", $todo->id);
+        $statement = $db->prepare("INSERT INTO todos (`name`, `description`, `date_created`, `date_until`, `responsible`, `category_id`) VALUES (:tname, :description, :date_created, :date_until, :responsible, :cat);");
         $statement->bindParam(":tname", $todo->name);
         $statement->bindParam(":description", $todo->description);
         $statement->bindParam(":date_created", $dateCreated);
