@@ -4,6 +4,7 @@ require("Database.php");
 
 header('Content-Type:application/json; charset=utf-8;');
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: *');
 
 
 class ToDo implements JsonSerializable
@@ -102,6 +103,15 @@ class ToDo implements JsonSerializable
         $statement->execute();
     }
 
+    public static function deleteTodo(stdClass $obj)
+    {
+        $todo = new self($obj);
+        $db = Database::getInstance();
+
+        $statement = $db->prepare("DELETE FROM todos WHERE todo_id=" . $todo->id);
+        $statement->execute();
+    }
+
     public function jsonSerialize(): array
     {
         $vars = get_object_vars($this);
@@ -143,6 +153,28 @@ class Category implements JsonSerializable
         return $result;
     }
 
+    public static function loadAll(): array
+    {
+        $result = null;
+        $db = Database::getInstance();
+
+        $statement = $db->prepare("SELECT * FROM  categories");
+        $statement->execute();
+
+        $results = $statement->fetchAll(PDO::FETCH_OBJ);
+
+        if ($results != null) {
+            $result = [];
+            $currItem = 0;
+            foreach ($results as $curr) {
+                $result[$currItem] = new self($curr);
+                $currItem++;
+            }
+        }
+
+        return $result;
+    }
+
 
     public function jsonSerialize(): array
     {
@@ -159,6 +191,7 @@ function dictToStdClass($dict)
     $obj->name = $dict["name"];
     $obj->description = $dict["description"];
     $obj->date_until = $dict["date_until"];
+    $obj->date_created = $dict["date_created"];
     $obj->responsible = $dict["responsible"];
     $obj->category_id = $dict["category_id"];
     return $obj;
@@ -166,13 +199,16 @@ function dictToStdClass($dict)
 
 function getDataFromPost(): array
 {
+    $json = json_decode(file_get_contents('php://input'));
+    var_dump($json);
     $data = [
-        'id' => intval(['todoId']),
-        'name' => $_POST['name'],
-        'description' => $_POST['description'],
-        'date_until' => $_POST['date_until'],
-        'responsible' => $_POST['responsible'],
-        'category_id' => intval($_POST['category_id'])
+        'id' => intval($json->id),
+        'name' => $json->name,
+        'description' => $json->description,
+        'date_until' => $json->untilDate,
+        'date_created' => $json->createdDated,
+        'responsible' => $json->responsible,
+        'category_id' => intval($json->category->id)
     ];
     foreach ($data as $key => $value) {
         if (empty($value)) {
@@ -206,9 +242,8 @@ switch ($_GET['option']) {
          *  VALUES (NULL, 'MEDT lernen', 'String', current_timestamp(), '2021-11-30 08:47:53', 'Stefan', '2');
          */
 
-        if (isset($_POST['name'])) {
             $data = getDataFromPost();
-
+        if (isset($data["id"])) {
             $obj = dictToStdClass($data);
 
             Todo::addToDatabase($obj);
@@ -226,11 +261,22 @@ switch ($_GET['option']) {
         }
         break;
     case "updateTodo":
-        if (isset($_POST['todoId'])) {
             $data = getDataFromPost();
+            if (isset($data["id"])) {
+                $obj = dictToStdClass($data);
+                ToDo::updateTodo($obj);
+                echo json_encode(ToDo::loadById($data['id']));
+            }
+        break;
+    case "getCategories":
+        echo json_encode(Category::loadAll());
+        break;
+    case "deleteTodo":
+        $data = getDataFromPost();
+        if (isset($data["id"])) {
             $obj = dictToStdClass($data);
-            ToDo::updateTodo($obj);
-            header("Location: index.php/?option=getTodo&id=" . $obj->todo_id);
+            ToDo::deleteTodo($obj);
+            echo json_encode(ToDo::loadById($data['id']));
         }
         break;
 }
